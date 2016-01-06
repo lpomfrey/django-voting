@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import get_model
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, \
     HttpResponseRedirect
 from django.contrib.auth.views import redirect_to_login
@@ -11,6 +10,12 @@ from django.template import loader, RequestContext
 from django.utils import simplejson
 
 from voting.models import Vote
+
+try:
+    from django.db.models import get_model
+except ImportError:
+    from django.apps import apps
+    get_model = apps.get_model
 
 VOTE_DIRECTIONS = (('up', 1), ('down', -1), ('clear', 0))
 
