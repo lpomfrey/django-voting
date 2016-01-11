@@ -1,26 +1,23 @@
-# coding: utf-8
-
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, \
-    HttpResponseRedirect
+import json
+
+from django.apps import apps
 from django.contrib.auth.views import redirect_to_login
-from django.template import loader, RequestContext
-from django.utils import simplejson
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
+                         HttpResponseRedirect)
+from django.template import RequestContext, loader
 
 from voting.models import Vote
 
-try:
-    from django.db.models import get_model
-except ImportError:
-    from django.apps import apps
-    get_model = apps.get_model
 
 VOTE_DIRECTIONS = (('up', 1), ('down', -1), ('clear', 0))
 
 
-def vote_on_object(request, model, direction, post_vote_redirect=None,
+def vote_on_object(
+        request, model, direction, post_vote_redirect=None,
         object_id=None, slug=None, slug_field=None, template_name=None,
         template_loader=loader, extra_context=None, context_processors=None,
         template_object_name='object', allow_xmlhttprequest=False):
@@ -86,11 +83,13 @@ def vote_on_object(request, model, direction, post_vote_redirect=None,
             else:
                 next = obj.get_absolute_url
         else:
-            raise AttributeError('Generic vote view must be called with either '
-                                 'post_vote_redirect, a "next" parameter in '
-                                 'the request, or the object being voted on '
-                                 'must define a get_absolute_url method or '
-                                 'property.')
+            raise AttributeError(
+                'Generic vote view must be called with either '
+                'post_vote_redirect, a "next" parameter in '
+                'the request, or the object being voted on '
+                'must define a get_absolute_url method or '
+                'property.'
+            )
         Vote.objects.record_vote(obj, request.user, vote)
         return HttpResponseRedirect(next)
     else:
@@ -111,15 +110,15 @@ def vote_on_object(request, model, direction, post_vote_redirect=None,
         return response
 
 
-def vote_on_object_with_lazy_model(request, app_label, model_name, *args,
-    **kwargs):
+def vote_on_object_with_lazy_model(
+        request, app_label, model_name, *args, **kwargs):
     """
     Generic object vote view that takes app_label and model_name instead
     of a model class and calls ``vote_on_object`` view.
     Returns HTTP 400 (Bad Request) if there is no model matching the app_label
     and model_name.
     """
-    model = get_model(app_label, model_name)
+    model = apps.get_model(app_label, model_name)
     if not model:
         return HttpResponseBadRequest('Model %s.%s does not exist' % (
             app_label, model_name))
@@ -127,12 +126,13 @@ def vote_on_object_with_lazy_model(request, app_label, model_name, *args,
 
 
 def json_error_response(error_message):
-    return HttpResponse(simplejson.dumps(dict(success=False,
-                                              error_message=error_message)))
+    return HttpResponse(json.dumps(dict(
+        success=False, error_message=error_message
+    )))
 
 
-def xmlhttprequest_vote_on_object(request, model, direction,
-        object_id=None, slug=None, slug_field=None):
+def xmlhttprequest_vote_on_object(
+        request, model, direction, object_id=None, slug=None, slug_field=None):
     """
     Generic object vote function for use via XMLHttpRequest.
 
@@ -177,7 +177,7 @@ def xmlhttprequest_vote_on_object(request, model, direction,
 
     # Vote and respond
     Vote.objects.record_vote(obj, request.user, vote)
-    return HttpResponse(simplejson.dumps({
+    return HttpResponse(json.dumps({
         'success': True,
         'score': Vote.objects.get_score(obj),
     }))
