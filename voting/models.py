@@ -23,8 +23,11 @@ class Vote(models.Model):
         (DOWNVOTE, '-1'),
     )
 
-    user = models.ForeignKey(getattr(settings, 'AUTH_USER_MODEL', 'auth.User'))
-    content_type = models.ForeignKey(ContentType)
+    user = models.ForeignKey(
+        getattr(settings, 'AUTH_USER_MODEL', 'auth.User'),
+        on_delete=models.CASCADE
+    )
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     object = GenericForeignKey('content_type', 'object_id')
     vote = models.SmallIntegerField(choices=SCORES)
